@@ -1,6 +1,7 @@
 local BootGUI = script.Parent:WaitForChild("Boot");
 local AlertGUI = script.Parent:WaitForChild("RemovedThreat");
 local IsScanning = false;
+local Prnt = script.Parent;
 
 AlertGUI.Visible = false;
 BootGUI.Visible = false;
@@ -9,103 +10,88 @@ wait(1)
 
 BootGUI.Visible = true;
 
-wait(5)
+wait(5);
 
 BootGUI.Visible = false;
 
-wait(1)
+wait(1);
 
 IsScanning = true;
 
 local function scan()
 	local function scanInstance(instance, location)
-		if string.lower(instance.Name) == "virus" or string.lower(instance.Name) == "anti lag" or string.lower(instance.Name) == "lag" or string.lower(instance.name) == "lag virus" then
-			local threatName = instance.Name;
+		
+		local blacklistednames = {
+			"virus",
+			"anti lag",
+			"lag",
+			"lag virus"
+		};
+		
+		if table.find(blacklistednames, string.lower(instance.Name)) then
 			print("Positive Detection!");
-			instance:Remove();
+			if #instance:GetChildren() > 0 then
+				
+				for k_, child in ipairs(instance:GetChildren()) do
+					
+					child:Remove();
+					
+				end
+				
+			end
 			print("Successfully Removed '"..instance.Name.."' in "..location);
-			AlertGUI:WaitForChild("Note").Text = "'"..instance.Name.."' in game/"..location..".";
+			AlertGUI:WaitForChild("Note").Text = "'"..instance.Name.."' in game."..location..".";
 			AlertGUI.Visible = true;
-			wait(2)
+			wait(2);
 			AlertGUI.Visible = false;
 		end
-		if instance:IsA("Model") then
-			for k_, index in pairs(instance:GetChildren()) do
-				scanInstance(index);
+		
+		if #instance:GetChildren() > 0 then
+			for k_, child in pairs(instance:GetChildren()) do
+				scanInstance(child, instance .. "." .. child.Name);
 			end
+			
 		end
 	end
 
-	for k_, index in pairs(game.Workspace:GetChildren()) do
-		scanInstance(index, "Workspace");
-	end
+	local targets = {
+		
+		game.Workspace,
+		game.Players,
+		game.ServerScriptService,
+		game.StarterGui,
+		game.StarterPack,
+		game.StarterPlayer:WaitForChild("StarterPlayerScripts"),
+		game.StarterPlayer:WaitForChild("StarterCharacterScripts")
+		
+	};
 	
-	for k_, index in pairs(game.Players:GetChildren()) do
-		scanInstance(index, "Players");
+	for k_, location in ipairs(targets) do
+		
+		scanInstance(location, location.Name);
+		
 	end
-	
-	for k_, index in pairs(game.Lighting:GetChildren()) do
-		scanInstance(index, "Lighting");
-	end
-	
-	for k_, index in pairs(game.MaterialService:GetChildren()) do
-		scanInstance(index, "MaterialService");
-	end
-	
-	for k_, index in pairs(game.NetworkClient:GetChildren()) do
-		scanInstance(index, "NetworkClient");
-	end
-	
-	for k_, index in pairs(game.ReplicatedFirst:GetChildren()) do
-		scanInstance(index, "ReplicatedFirst");
-	end
-	
-	for k_, index in pairs(game.ReplicatedStorage:GetChildren()) do
-		scanInstance(index, "ReplicatedStorage");
-	end
-	
-	for k_, index in pairs(game.ServerScriptService:GetChildren()) do
-		scanInstance(index, "ServerScriptService");
-	end
-	
-	for k_, index in pairs(game.ServerStorage:GetChildren()) do
-		scanInstance(index, "ServerStorage");
-	end
-	
-	for k_, index in pairs(game.StarterGui:GetChildren()) do
-		scanInstance(index, "StarterGui");
-	end
-	
-	for k_, index in pairs(game.StarterPack:GetChildren()) do
-		scanInstance(index, "StarterPack");
-	end
-	
-	for k_, index in pairs(game.StarterPlayer:GetChildren()) do
-		scanInstance(index, "StarterPlayer");
-	end
-	
-	for k_, index in pairs(game.Teams:GetChildren()) do
-		scanInstance(index, "Teams");
-	end
-	
-	for k_, index in pairs(game.SoundService:GetChildren()) do
-		scanInstance(index, "SoundService");
-	end
-	
-	for k_, index in pairs(game.TextChatService:GetChildren()) do
-		scanInstance(index, "TextChatService");
-	end
-	
+
+end
+
+local function preventUnauthDestruction()
+
+	if #Prnt:WaitForChild("Stop Unauthorised Removal") < 1 then
+		
+		for k_, plyr in pairs(game:GetService("Players"):GetPlayers()) do
+			
+			plyr:Kick("An unauthorised third party attempted to remove PurposeAV.");
+			
+		end
+		
+	end 
 end
 
 while true do
-	
-	if IsScanning == true then
-			
+	preventUnauthDestruction();
+	if IsScanning then
 		scan();
-		
-		wait(1)
-		
 	end
+	wait(3);
 	
 end
